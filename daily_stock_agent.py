@@ -1,11 +1,10 @@
 import os
 from datetime import datetime
-import google.genai as genai
+from google import genai  # 👈 导入全新的统一 SDK
 
 # 从 GitHub Actions 的环境变量中安全读取 API Key
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# 专为数据、收并购和机构评级定制的深度 Prompt
 PROMPT = """
 你是一个资深的硬科技与AI基础设施行业研究员（Data & Semiconductor Specialist）。
 请为我生成一份今日的“硬科技与AI基础设施”半导体股票每日精炼报道。
@@ -27,12 +26,15 @@ def main():
     if not GEMINI_API_KEY:
         raise ValueError("❌ 错误: 缺少 GEMINI_API_KEY 环境变量，请检查 GitHub Secrets 配置。")
         
-    # 初始化 Gemini
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash') 
+    # 使用新版 SDK 的标准客户端初始化方式
+    client = genai.Client(api_key=GEMINI_API_KEY)
     
-    print("正在呼叫 Gemini API 抓取今日数据...")
-    response = model.generate_content(PROMPT)
+    print("正在呼叫最新 Gemini 2.5 接口抓取今日数据...")
+    # 升级到 2026 年最新主流的 gemini-2.5-flash 模型
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=PROMPT,
+    )
     
     # 自动创建用于存放报告的 reports 文件夹
     os.makedirs("reports", exist_ok=True)
@@ -41,7 +43,6 @@ def main():
     today_str = datetime.now().strftime("%Y-%m-%d")
     filename = f"reports/{today_str}.md"
     
-    # 将内容写入 Markdown 文件（去掉了引发报错的 f-string 复杂表达式）
     with open(filename, "w", encoding="utf-8") as f:
         f.write("# 📊 AI Infrastructure & Data Stock Daily\n\n")
         f.write(response.text)
