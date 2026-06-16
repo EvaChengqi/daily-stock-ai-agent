@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-import google.generativeai as genai
+import google.genai as genai
 
 # 从 GitHub Actions 的环境变量中安全读取 API Key
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
