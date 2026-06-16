@@ -17,17 +17,17 @@ jobs:
     - name: Check out repository code
       uses: actions/checkout@v3
 
-    # 2. 明确配置 Python 环境
+    # 2. 明确配置最新的 Python 3.11 环境，避开未来的版本过期警告
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
-    # 3. 【强力修复】直接明文安装 Gemini SDK，不再依赖外部文件
-    - name: Install Gemini SDK
+    # 3. 安装官方最新的 google-genai 库
+    - name: Install Latest Gemini GenAI SDK
       run: |
         python -m pip install --upgrade pip
-        python -m pip install google-generativeai
+        python -m pip install google-genai
 
     # 4. 运行 Agent 脚本
     - name: Execute Daily Agent Script
@@ -41,4 +41,4 @@ jobs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add reports/*.md
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Add daily report $(date +'%Y
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Add daily report $(date +'%Y-%m-%d')" && git push)
