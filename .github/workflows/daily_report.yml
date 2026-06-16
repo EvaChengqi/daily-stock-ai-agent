@@ -2,47 +2,43 @@ name: Daily Stock Agent (Save to Repo)
 
 on:
   schedule:
-    # 这里的 cron 表达式使用的是 UTC（世界标准时间）
-    # 如果你想在北京时间每天早上 07:30 自动生成报告
-    # 对应 UTC 时间就是前一天晚上的 23:30。设定如下：
     - cron: '30 23 * * *'
-  workflow_dispatch: # 允许你随时在网页后台手动点击按钮进行测试
+  workflow_dispatch:
 
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
     
-    # 这一步极其关键：赋予工作流向你的私有仓库提交(Push)新报告的写入权限
     permissions:
       contents: write
 
     steps:
-    # 1. 拉取仓库的代码到虚拟服务器上
+    # 1. 拉取仓库代码
     - name: Check out repository code
       uses: actions/checkout@v3
 
-    # 2. 配置 Python 3.10 环境
+    # 2. 明确配置 Python 环境
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    # 3. 安装必要的依赖库
+    # 3. 【核心修正】使用 python -m pip 确保依赖安装到当前 Python 环境的 Context 中
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
 
-    # 4. 注入密匙并运行 Python 脚本
+    # 4. 运行 Agent 脚本
     - name: Execute Daily Agent Script
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: python daily_stock_agent.py
 
-    # 5. 自动把 reports/ 下生成的新 Markdown 文件推送到你的 GitHub 仓库中
+    # 5. 自动把新文件推送到你的 GitHub 仓库
     - name: Commit and Push Report
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add reports/*.md
-        # 检查是否有新文件，有新文件才提交，防止没有更新时引发报错导致工作流变红
         git diff --quiet && git diff --staged --quiet || (git commit -m "Add daily report $(date +'%Y-%m-%d')" && git push)
